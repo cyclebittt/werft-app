@@ -1,26 +1,74 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-bg: #0a0a0a;
+  --color-surface: #141414;
+  --color-surface-2: #1e1e1e;
+  --color-border: #2a2a2a;
+  --color-accent: #e8a020;
+  --color-accent-2: #c0392b;
+  --color-text: #f0f0f0;
+  --color-muted: #666666;
+  --color-success: #27ae60;
+  --color-warning: #e8a020;
+  --color-danger: #c0392b;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --color-bg: var(--color-bg);
+  --color-surface: var(--color-surface);
+  --color-surface-2: var(--color-surface-2);
+  --color-border: var(--color-border);
+  --color-accent: var(--color-accent);
+  --color-accent-2: var(--color-accent-2);
+  --color-text: var(--color-text);
+  --color-muted: var(--color-muted);
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-danger: var(--color-danger);
+  --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-syne);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans), Inter, system-ui, sans-serif;
+  min-height: 100%;
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--color-bg); }
+::-webkit-scrollbar-thumb { background: var(--color-border); }
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@keyframes gold-pulse {
+  0%, 100% { box-shadow: 0 0 8px 2px rgba(232, 160, 32, 0.4); }
+  50% { box-shadow: 0 0 16px 4px rgba(232, 160, 32, 0.7); }
+}
+
+.gold-glow {
+  animation: gold-pulse 2s ease-in-out infinite;
+}
+
+@keyframes tick {
+  0% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.tick-anim {
+  animation: tick 0.1s ease-out;
 }
