@@ -17,20 +17,31 @@ export function useUserPoints() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Supabase nicht konfiguriert → kein Fehler, einfach kein Profil
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      setLoading(false);
+      return;
+    }
+
     const supabase = createClient();
 
     async function fetchProfile() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setLoading(false); return; }
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { setLoading(false); return; }
 
-      const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
+        const { data } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
 
-      if (data) setProfile(data as UserProfile);
-      setLoading(false);
+        if (data) setProfile(data as UserProfile);
+      } catch {
+        // Supabase-Fehler still ignorieren (Demo-Modus)
+      } finally {
+        setLoading(false);
+      }
     }
 
     fetchProfile();

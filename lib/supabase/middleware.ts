@@ -29,7 +29,8 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const protectedPaths = ["/dashboard", "/billiard", "/reserve", "/loyalty", "/profile"];
+  // Nur diese Bereiche erfordern Login
+  const protectedPaths = ["/dashboard", "/loyalty", "/profile"];
   const isProtected = protectedPaths.some((p) =>
     request.nextUrl.pathname.startsWith(p)
   );
