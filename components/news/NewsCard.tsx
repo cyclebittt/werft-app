@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Pin } from "lucide-react";
@@ -33,11 +34,13 @@ export function NewsCard({ post }: NewsCardProps) {
   return (
     <Card className="overflow-hidden">
       {post.image_url && (
-        <div className="aspect-[16/7] overflow-hidden">
-          <img
+        <div className="relative aspect-[16/7] overflow-hidden">
+          <Image
             src={post.image_url}
             alt={post.title}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            sizes="(max-width: 672px) 100vw, 672px"
           />
         </div>
       )}

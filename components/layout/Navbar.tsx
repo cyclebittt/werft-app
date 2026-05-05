@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Anchor, Trophy, User } from "lucide-react";
+import Image from "next/image";
+import { Trophy, User } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useUserPoints } from "@/lib/hooks/useUserPoints";
 
@@ -20,12 +21,9 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-[var(--color-border)] shadow-sm hidden md:block">
       <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-        <Link
-          href="/"
-          className="flex items-center gap-2.5 text-[var(--color-text)] hover:text-[var(--color-accent)] transition-colors"
-        >
-          <Anchor className="w-5 h-5 text-[var(--color-accent)]" />
-          <span className="font-bold text-base tracking-wide">Bistro Zur Werft</span>
+        <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
+          <Image src="/logo.png" alt="Zur Werft" width={44} height={44} className="rounded-lg" />
+          <span className="font-bold text-base tracking-wide text-[var(--color-text)]">Bistro Zur Werft</span>
         </Link>
 
         <nav className="flex items-center gap-1">

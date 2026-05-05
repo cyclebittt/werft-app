@@ -6,13 +6,13 @@
   --color-surface: #FFFFFF;
   --color-surface-2: #EDE9E2;
   --color-border: #D8D2C8;
-  --color-accent: #9E5F28;        /* cognac amber – maritime warmth */
-  --color-accent-hover: #7D4A1E;
+  --color-accent: #C8601A;        /* Werft-Orange aus dem Logo */
+  --color-accent-hover: #A34D13;
   --color-accent-2: #B83A10;
   --color-text: #1A1410;          /* warm near-black */
   --color-muted: #6E655E;
   --color-success: #2A6E3F;
-  --color-warning: #9E5F28;
+  --color-warning: #C8601A;
   --color-danger: #B83A10;
   --color-nav-bg: #FFFFFF;
 }
