@@ -1,5 +1,5 @@
 import { isOpenNow, getTodayOpeningHours } from "@/lib/utils/time";
-import { Anchor, Clock, Circle, Calendar } from "lucide-react";
+import { Anchor, Clock, Circle, Calendar, UtensilsCrossed } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Navbar } from "@/components/layout/Navbar";
@@ -21,9 +21,9 @@ const DEMO_POSTS: NewsPost[] = [
   },
   {
     id: "2",
-    title: "Neues Frühstücksangebot ab 08:00 Uhr",
+    title: "Frühstück ab 08:00 Uhr – Mo bis Fr",
     content:
-      "Wir starten jetzt schon früher in den Tag! Frühstück mit frischen Brötchen, Rührei, Aufschnitt und Kaffee oder Tee. Das Frühstücksbuffet gibt es Mo–Fr von 08:00 bis 11:00 Uhr. Komm vorbei und starte deinen Tag bei uns.",
+      "Wir starten jetzt schon früher in den Tag! Frühstück mit frischen Brötchen, Rührei, Aufschnitt und Kaffee oder Tee. Das Frühstücksangebot gibt es Montag bis Freitag von 08:00 bis 11:00 Uhr. Komm vorbei!",
     image_url: null,
     type: "special",
     pinned: false,
@@ -31,9 +31,9 @@ const DEMO_POSTS: NewsPost[] = [
   },
   {
     id: "3",
-    title: "Champions League live bei uns",
+    title: "Champions League live auf der großen Leinwand",
     content:
-      "Alle UEFA Champions League Spiele siehst du bei uns live auf der großen Leinwand. Komm mit deinen Freunden, gönn dir ein kühles Bier und erlebe die besten Spiele Europas live in der Werft-Atmosphäre.",
+      "Alle UEFA Champions League Spiele siehst du bei uns live. Komm mit deinen Freunden, gönn dir ein kühles Bier und erlebe die besten Spiele Europas in der Werft-Atmosphäre.",
     image_url: null,
     type: "sport",
     pinned: false,
@@ -43,7 +43,7 @@ const DEMO_POSTS: NewsPost[] = [
     id: "4",
     title: "Werft-App jetzt online!",
     content:
-      "Unsere neue App ist live! Jetzt kannst du Billiardtische direkt buchen, Tische für dein nächstes Essen reservieren, die aktuelle Speisekarte einsehen und Punkte für jeden Besuch sammeln. Registriere dich und sichere dir 50 Willkommenspunkte.",
+      "Unsere neue App ist live! Jetzt kannst du Billiardtische direkt buchen, Tische reservieren, die aktuelle Speisekarte einsehen und Punkte für jeden Besuch sammeln. Registriere dich und sichere dir 50 Willkommenspunkte.",
     image_url: null,
     type: "general",
     pinned: false,
@@ -76,54 +76,67 @@ export default async function HomePage() {
   return (
     <>
       <Navbar />
-      <main className="flex-1 pb-20 md:pb-0">
-        <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
+      <main className="flex-1 pb-24 md:pb-0">
+        <div className="max-w-2xl mx-auto px-4 py-8 space-y-10">
 
           {/* Hero */}
-          <section className="space-y-4">
-            <div className="flex items-start justify-between">
+          <section className="space-y-5">
+            <div className="flex items-start justify-between gap-4">
               <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <Anchor className="w-6 h-6 text-[var(--color-accent)]" />
-                  <h1 className="text-2xl font-bold text-[var(--color-text)] tracking-tight">
+                <div className="flex items-center gap-3 mb-1">
+                  <Anchor className="w-7 h-7 text-[var(--color-accent)]" />
+                  <h1 className="text-3xl font-bold text-[var(--color-text)] tracking-tight leading-tight">
                     Bistro Zur Werft
                   </h1>
                 </div>
-                <p className="text-[var(--color-muted)] text-sm">
+                <p className="text-[var(--color-muted)] text-base ml-10">
                   Erlenbach am Main · Billard · Gastronomie
                 </p>
               </div>
-              <div className={[
-                "flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-[2px] border",
-                open
-                  ? "border-green-800 bg-green-950/50 text-[var(--color-success)]"
-                  : "border-[var(--color-border)] text-[var(--color-muted)]",
-              ].join(" ")}>
-                <span className={`w-1.5 h-1.5 rounded-full ${open ? "bg-[var(--color-success)] animate-pulse" : "bg-[var(--color-muted)]"}`} />
+
+              {/* Open/Closed status */}
+              <div
+                className={[
+                  "flex-shrink-0 flex items-center gap-2 text-sm font-semibold px-3 py-2 rounded-lg border",
+                  open
+                    ? "border-green-300 bg-green-50 text-green-800"
+                    : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-muted)]",
+                ].join(" ")}
+              >
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    open ? "bg-green-500 animate-pulse" : "bg-[var(--color-border)]"
+                  }`}
+                />
                 {open ? "Geöffnet" : "Geschlossen"}
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 text-xs text-[var(--color-muted)] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[2px] px-3 py-2 w-fit">
-              <Clock className="w-3.5 h-3.5" />
-              Heute: {hours}
+            {/* Opening hours */}
+            <div className="flex items-center gap-2 text-sm text-[var(--color-muted)] bg-white border border-[var(--color-border)] rounded-xl px-4 py-3 w-fit card-shadow">
+              <Clock className="w-4 h-4 text-[var(--color-accent)]" />
+              <span>Heute geöffnet: <strong className="text-[var(--color-text)]">{hours}</strong></span>
             </div>
 
-            <div className="flex gap-3 flex-wrap">
+            {/* Quick actions */}
+            <div className="flex flex-wrap gap-3">
               <Link href="/billiard">
-                <Button size="sm" className="gap-2">
-                  <Circle className="w-3.5 h-3.5" />
+                <Button size="md" className="gap-2 text-base">
+                  <Circle className="w-4 h-4" />
                   Billard buchen
                 </Button>
               </Link>
               <Link href="/reserve">
-                <Button size="sm" variant="secondary" className="gap-2">
-                  <Calendar className="w-3.5 h-3.5" />
+                <Button size="md" variant="secondary" className="gap-2">
+                  <Calendar className="w-4 h-4" />
                   Tisch reservieren
                 </Button>
               </Link>
               <Link href="/menu">
-                <Button size="sm" variant="secondary">Speisekarte</Button>
+                <Button size="md" variant="secondary" className="gap-2">
+                  <UtensilsCrossed className="w-4 h-4" />
+                  Speisekarte
+                </Button>
               </Link>
             </div>
           </section>
@@ -132,8 +145,8 @@ export default async function HomePage() {
 
           {/* News */}
           <section>
-            <h2 className="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-widest mb-4">
-              Aktuelles
+            <h2 className="text-lg font-bold text-[var(--color-text)] mb-5">
+              Aktuelles & Neuigkeiten
             </h2>
             <NewsFeed posts={posts} />
           </section>

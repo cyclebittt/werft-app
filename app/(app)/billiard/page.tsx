@@ -2,113 +2,124 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Clock, Circle, Info } from "lucide-react";
+import { X, Info, CheckCircle, AlertCircle, Circle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Timer } from "@/components/ui/Timer";
-import { CheckCircle } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { useBilliardTables, type BilliardTable } from "@/lib/hooks/useBilliardTables";
+import { awardPoints, calcBilliardPoints } from "@/lib/utils/points";
+
+// ─── Types ─────────────────────────────────────────────────────────────────────
 
 type TableStatus = "free" | "occupied" | "reserved";
+type BookingMode = "now" | "reserve";
+type EnrichedTable = BilliardTable & { startTime?: string };
 
-interface TableData {
-  id: number;
-  status: TableStatus;
-  startTime?: string; // ISO string wenn belegt
-}
+// ─── Status Config ──────────────────────────────────────────────────────────────
 
-// Mock-Initialdaten für Demo
-const MOCK_TABLES: TableData[] = [
-  { id: 1, status: "free" },
-  { id: 2, status: "occupied", startTime: new Date(Date.now() - 42 * 60 * 1000).toISOString() },
-  { id: 3, status: "free" },
-  { id: 4, status: "reserved" },
-  { id: 5, status: "free" },
-  { id: 6, status: "occupied", startTime: new Date(Date.now() - 11 * 60 * 1000).toISOString() },
-];
-
-const statusConfig = {
+const statusConfig: Record<TableStatus, {
+  dot: string;
+  label: string;
+  labelColor: string;
+  cardBorder: string;
+  cardBg: string;
+}> = {
   free: {
-    dot: "bg-[var(--color-success)] shadow-[0_0_6px_var(--color-success)]",
+    dot: "bg-green-500",
     label: "Frei",
-    labelColor: "text-[var(--color-success)]",
-    border: "hover:border-[var(--color-success)]",
-    bg: "hover:bg-green-950/30",
+    labelColor: "text-green-700",
+    cardBorder: "border-green-200 hover:border-green-400",
+    cardBg: "bg-green-50 hover:bg-green-50/80",
   },
   occupied: {
-    dot: "bg-[var(--color-danger)] shadow-[0_0_6px_var(--color-danger)]",
+    dot: "bg-red-500",
     label: "Belegt",
-    labelColor: "text-[var(--color-danger)]",
-    border: "hover:border-[var(--color-danger)]",
-    bg: "hover:bg-red-950/30",
+    labelColor: "text-red-700",
+    cardBorder: "border-red-200",
+    cardBg: "bg-red-50",
   },
   reserved: {
-    dot: "bg-[var(--color-warning)] shadow-[0_0_6px_var(--color-warning)]",
+    dot: "bg-amber-500",
     label: "Reserviert",
-    labelColor: "text-[var(--color-warning)]",
-    border: "hover:border-[var(--color-warning)]",
-    bg: "",
+    labelColor: "text-amber-700",
+    cardBorder: "border-amber-200",
+    cardBg: "bg-amber-50",
   },
 };
 
-function TableCard({ table, onClick }: { table: TableData; onClick: () => void }) {
+// ─── TableCard ──────────────────────────────────────────────────────────────────
+
+function TableCard({ table, onClick }: { table: EnrichedTable; onClick: () => void }) {
   const cfg = statusConfig[table.status];
+  const clickable = table.status === "free";
+
   return (
     <motion.div
       layout
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.02 }}
-      onClick={table.status !== "reserved" ? onClick : undefined}
+      whileHover={clickable ? { scale: 1.02 } : {}}
+      onClick={clickable ? onClick : undefined}
       className={[
-        "border border-[var(--color-border)] rounded-[2px] p-5",
-        "transition-all duration-200 bg-[var(--color-surface)]",
-        table.status !== "reserved" ? `cursor-pointer ${cfg.border} ${cfg.bg}` : "cursor-default opacity-70",
+        "border rounded-2xl p-5 transition-all duration-200",
+        cfg.cardBorder,
+        cfg.cardBg,
+        "card-shadow",
+        clickable ? "cursor-pointer" : "cursor-default",
       ].join(" ")}
     >
       <div className="flex items-start justify-between mb-4">
         <span className="font-mono text-4xl font-bold text-[var(--color-text)] leading-none">
           {String(table.id).padStart(2, "0")}
         </span>
-        <span className={`w-2.5 h-2.5 rounded-full mt-1 flex-shrink-0 ${cfg.dot}`} />
+        <span className={`w-3 h-3 rounded-full mt-1 flex-shrink-0 ${cfg.dot} ${
+          table.status === "free" ? "animate-pulse" : ""
+        }`} />
       </div>
 
-      <div className={`text-xs font-medium uppercase tracking-wider mb-2 ${cfg.labelColor}`}>
+      <div className={`text-sm font-bold uppercase tracking-wider mb-2 ${cfg.labelColor}`}>
         {cfg.label}
       </div>
 
       {table.status === "occupied" && table.startTime ? (
-        <div className="font-mono text-sm text-[var(--color-danger)]">
+        <div className="font-mono text-sm font-semibold text-red-700">
           <Timer startTime={table.startTime} />
         </div>
       ) : table.status === "free" ? (
-        <div className="text-xs text-[var(--color-muted)]">Antippen zum Buchen</div>
+        <div className="text-sm text-green-700 font-medium">Tippen zum Buchen</div>
       ) : (
-        <div className="text-xs text-[var(--color-muted)]">Bereits vergeben</div>
+        <div className="text-sm text-amber-700 font-medium">Bereits vergeben</div>
       )}
     </motion.div>
   );
 }
 
-type BookingMode = "now" | "reserve";
+// ─── BookingModal ───────────────────────────────────────────────────────────────
 
 function BookingModal({
   table,
   onClose,
   onBook,
+  submitting,
 }: {
-  table: TableData;
+  table: EnrichedTable;
   onClose: () => void;
-  onBook: (mode: BookingMode, name: string) => void;
+  onBook: (mode: BookingMode, name: string, phone: string, date?: string, time?: string, duration?: number) => void;
+  submitting: boolean;
 }) {
-  const [mode, setMode] = useState<BookingMode>("now");
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
+  const [mode, setMode]       = useState<BookingMode>("now");
+  const [name, setName]       = useState("");
+  const [phone, setPhone]     = useState("");
+  const [date, setDate]       = useState("");
+  const [time, setTime]       = useState("");
   const [duration, setDuration] = useState(60);
+
+  const inputClass =
+    "w-full bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-xl px-4 py-3 text-base text-[var(--color-text)] focus:outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent)]/20 transition-all placeholder:text-[var(--color-muted)]";
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    onBook(mode, name || "Gast");
+    onBook(mode, name || "Gast", phone, date, time, duration);
   }
 
   return (
@@ -116,7 +127,7 @@ function BookingModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <motion.div
@@ -124,16 +135,17 @@ function BookingModal({
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 60, opacity: 0 }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[2px] w-full max-w-md p-6 space-y-5"
+        className="bg-white border border-[var(--color-border)] rounded-2xl card-shadow-md w-full max-w-md p-6 space-y-5"
       >
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="font-bold text-[var(--color-text)] text-lg">Tisch {table.id}</h2>
-            <p className="text-xs text-[var(--color-muted)]">Buchung anfragen</p>
+            <h2 className="text-xl font-bold text-[var(--color-text)]">Tisch {table.id}</h2>
+            <p className="text-sm text-[var(--color-muted)]">Buchung anfragen</p>
           </div>
           <button
             onClick={onClose}
-            className="text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors p-1"
+            className="text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors p-2 rounded-lg hover:bg-[var(--color-surface-2)]"
+            aria-label="Schließen"
           >
             <X className="w-5 h-5" />
           </button>
@@ -147,10 +159,10 @@ function BookingModal({
               type="button"
               onClick={() => setMode(m)}
               className={[
-                "py-2.5 text-sm rounded-[2px] border transition-all font-medium",
+                "py-3 text-base font-semibold rounded-xl border transition-all",
                 mode === m
-                  ? "border-[var(--color-accent)] bg-amber-950/60 text-[var(--color-accent)]"
-                  : "border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-surface-2)]",
+                  ? "border-[var(--color-accent)] bg-amber-50 text-[var(--color-accent)]"
+                  : "border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-muted)] hover:border-[var(--color-accent)]",
               ].join(" ")}
             >
               {m === "now" ? "Jetzt spielen" : "Reservieren"}
@@ -158,57 +170,67 @@ function BookingModal({
           ))}
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs text-[var(--color-muted)] mb-1">Dein Name *</label>
+            <label className="block text-sm font-semibold text-[var(--color-text)] mb-2">
+              Name <span className="text-[var(--color-accent)]">*</span>
+            </label>
             <input
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Vorname"
-              className="w-full bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-[2px] px-3 py-2 text-sm text-[var(--color-text)] focus:outline-none focus:border-[var(--color-accent)]"
+              placeholder="Ihr Name"
+              className={inputClass}
             />
           </div>
           <div>
-            <label className="block text-xs text-[var(--color-muted)] mb-1">Telefon (optional)</label>
+            <label className="block text-sm font-semibold text-[var(--color-text)] mb-2">
+              Telefon <span className="text-[var(--color-muted)] font-normal">(optional)</span>
+            </label>
             <input
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="+49 …"
-              className="w-full bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-[2px] px-3 py-2 text-sm text-[var(--color-text)] focus:outline-none focus:border-[var(--color-accent)]"
+              className={inputClass}
             />
           </div>
 
           {mode === "reserve" && (
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-[var(--color-muted)] mb-1">Datum *</label>
+                <label className="block text-sm font-semibold text-[var(--color-text)] mb-2">
+                  Datum <span className="text-[var(--color-accent)]">*</span>
+                </label>
                 <input
                   required
                   type="date"
                   value={date}
                   min={new Date().toISOString().split("T")[0]}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-[2px] px-3 py-2 text-sm text-[var(--color-text)] focus:outline-none focus:border-[var(--color-accent)]"
+                  className={inputClass}
                 />
               </div>
               <div>
-                <label className="block text-xs text-[var(--color-muted)] mb-1">Uhrzeit *</label>
+                <label className="block text-sm font-semibold text-[var(--color-text)] mb-2">
+                  Uhrzeit <span className="text-[var(--color-accent)]">*</span>
+                </label>
                 <input
                   required
                   type="time"
                   value={time}
                   onChange={(e) => setTime(e.target.value)}
-                  className="w-full bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-[2px] px-3 py-2 text-sm text-[var(--color-text)] focus:outline-none focus:border-[var(--color-accent)]"
+                  className={inputClass}
                 />
               </div>
               <div className="col-span-2">
-                <label className="block text-xs text-[var(--color-muted)] mb-1">Dauer</label>
+                <label className="block text-sm font-semibold text-[var(--color-text)] mb-2">
+                  Gewünschte Dauer
+                </label>
                 <select
                   value={duration}
                   onChange={(e) => setDuration(Number(e.target.value))}
-                  className="w-full bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-[2px] px-3 py-2 text-sm text-[var(--color-text)] focus:outline-none focus:border-[var(--color-accent)]"
+                  className={inputClass + " cursor-pointer"}
                 >
                   {[30, 60, 90, 120, 180].map((m) => (
                     <option key={m} value={m}>{m} Minuten</option>
@@ -218,11 +240,11 @@ function BookingModal({
             </div>
           )}
 
-          <div className="flex gap-3 pt-1">
+          <div className="flex gap-3 pt-2">
             <Button type="button" variant="secondary" onClick={onClose} className="flex-1" size="md">
               Abbrechen
             </Button>
-            <Button type="submit" className="flex-1" size="md">
+            <Button type="submit" className="flex-1" size="md" disabled={submitting} loading={submitting}>
               {mode === "now" ? "Jetzt buchen" : "Reservieren"}
             </Button>
           </div>
@@ -232,129 +254,231 @@ function BookingModal({
   );
 }
 
-export default function BilliardPage() {
-  const [tables, setTables] = useState<TableData[]>(MOCK_TABLES);
-  const [selectedTable, setSelectedTable] = useState<TableData | null>(null);
-  const [successTable, setSuccessTable] = useState<number | null>(null);
+// ─── Page ───────────────────────────────────────────────────────────────────────
 
-  function handleTableClick(table: TableData) {
-    if (table.status === "reserved") return;
-    if (table.status === "occupied") {
-      // Zeige Info – kein Buchen möglich
+export default function BilliardPage() {
+  const { tables, loading } = useBilliardTables();
+  const [startTimes, setStartTimes]       = useState<Record<number, string>>({});
+  const [selectedTable, setSelectedTable] = useState<EnrichedTable | null>(null);
+  const [successTable, setSuccessTable]   = useState<number | null>(null);
+  const [error, setError]                 = useState<string | null>(null);
+  const [submitting, setSubmitting]       = useState(false);
+
+  // Fetch start times for currently occupied tables
+  useEffect(() => {
+    const occupied = tables.filter(
+      (t) => t.status === "occupied" && t.current_booking_id
+    );
+    if (occupied.length === 0) return;
+
+    const supabase = createClient();
+    const ids = occupied.map((t) => t.current_booking_id!);
+
+    supabase
+      .from("billiard_bookings")
+      .select("id, table_id, start_time")
+      .in("id", ids)
+      .then(({ data }) => {
+        if (!data) return;
+        const map: Record<number, string> = {};
+        data.forEach((b) => { map[b.table_id] = b.start_time; });
+        setStartTimes(map);
+      });
+  }, [tables]);
+
+  const enrichedTables: EnrichedTable[] = tables.map((t) => ({
+    ...t,
+    startTime: startTimes[t.id],
+  }));
+
+  async function handleBook(
+    mode: BookingMode,
+    name: string,
+    phone: string,
+    date?: string,
+    time?: string,
+    duration?: number
+  ) {
+    if (!selectedTable) return;
+    setSubmitting(true);
+    setError(null);
+
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const startTime =
+      mode === "now"
+        ? new Date().toISOString()
+        : new Date(`${date}T${time}`).toISOString();
+    const durationMins = duration ?? 60;
+
+    const { data: newBooking, error: insertError } = await supabase
+      .from("billiard_bookings")
+      .insert({
+        table_id: selectedTable.id,
+        user_id: user?.id ?? null,
+        guest_name: name,
+        guest_phone: phone || null,
+        start_time: startTime,
+        duration_minutes: durationMins,
+        status: mode === "now" ? "active" : "pending",
+        points_earned: user && mode === "now" ? calcBilliardPoints(durationMins) : 0,
+      })
+      .select()
+      .single();
+
+    if (insertError || !newBooking) {
+      setError("Buchung konnte nicht gespeichert werden. Bitte versuche es erneut.");
+      setSubmitting(false);
       return;
     }
-    setSelectedTable(table);
-  }
 
-  function handleBook(mode: BookingMode, name: string) {
-    if (!selectedTable) return;
-    if (mode === "now") {
-      setTables((prev) =>
-        prev.map((t) =>
-          t.id === selectedTable.id
-            ? { ...t, status: "occupied", startTime: new Date().toISOString() }
-            : t
-        )
-      );
-    } else {
-      setTables((prev) =>
-        prev.map((t) =>
-          t.id === selectedTable.id ? { ...t, status: "reserved" } : t
-        )
-      );
+    await supabase
+      .from("billiard_tables")
+      .update({
+        status: mode === "now" ? "occupied" : "reserved",
+        current_booking_id: mode === "now" ? newBooking.id : null,
+      })
+      .eq("id", selectedTable.id);
+
+    if (user && mode === "now") {
+      try {
+        await awardPoints(
+          user.id,
+          calcBilliardPoints(durationMins),
+          `Billard Tisch ${selectedTable.id}`,
+          supabase
+        );
+      } catch {
+        // Points failure is non-blocking
+      }
     }
+
     setSuccessTable(selectedTable.id);
     setSelectedTable(null);
+    setSubmitting(false);
     setTimeout(() => setSuccessTable(null), 4000);
   }
 
-  const free = tables.filter((t) => t.status === "free").length;
-  const occupied = tables.filter((t) => t.status === "occupied").length;
-  const reserved = tables.filter((t) => t.status === "reserved").length;
+  const free     = enrichedTables.filter((t) => t.status === "free").length;
+  const occupied = enrichedTables.filter((t) => t.status === "occupied").length;
+  const reserved = enrichedTables.filter((t) => t.status === "reserved").length;
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-2xl mx-auto px-4 py-8 space-y-7">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--color-text)]">Billard</h1>
-          <p className="text-[var(--color-muted)] text-sm mt-1">6 Tische · Live-Status</p>
+          <div className="flex items-center gap-2.5 mb-1">
+            <Circle className="w-6 h-6 text-[var(--color-accent)]" />
+            <h1 className="text-3xl font-bold text-[var(--color-text)]">Billard</h1>
+          </div>
+          <p className="text-[var(--color-muted)] text-base ml-8.5">6 Tische · Live-Status</p>
         </div>
-        <div className="flex items-center gap-1.5 text-xs bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[2px] px-2.5 py-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-success)] animate-pulse" />
-          <span className="text-[var(--color-muted)]">Live</span>
+        <div className="flex items-center gap-2 text-sm bg-white border border-[var(--color-border)] rounded-xl px-3 py-2 card-shadow">
+          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+          <span className="text-[var(--color-muted)] font-medium">Live</span>
         </div>
       </div>
 
-      {/* Status-Übersicht */}
+      {/* Status overview */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: "Frei", value: free, color: "text-[var(--color-success)]", dot: "bg-[var(--color-success)]" },
-          { label: "Belegt", value: occupied, color: "text-[var(--color-danger)]", dot: "bg-[var(--color-danger)]" },
-          { label: "Reserviert", value: reserved, color: "text-[var(--color-warning)]", dot: "bg-[var(--color-warning)]" },
-        ].map(({ label, value, color, dot }) => (
-          <div key={label} className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[2px] p-3 text-center">
-            <div className={`text-2xl font-mono font-bold ${color}`}>{value}</div>
-            <div className="flex items-center justify-center gap-1.5 mt-1">
-              <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
-              <span className="text-xs text-[var(--color-muted)]">{label}</span>
+          { label: "Frei",      value: free,     dot: "bg-green-500", bg: "bg-green-50 border-green-200",  text: "text-green-700"  },
+          { label: "Belegt",    value: occupied, dot: "bg-red-500",   bg: "bg-red-50 border-red-200",      text: "text-red-700"    },
+          { label: "Reserviert",value: reserved, dot: "bg-amber-500", bg: "bg-amber-50 border-amber-200",  text: "text-amber-700"  },
+        ].map(({ label, value, dot, bg, text }) => (
+          <div
+            key={label}
+            className={`border rounded-2xl p-4 text-center card-shadow ${bg}`}
+          >
+            <div className={`text-3xl font-mono font-bold ${text}`}>
+              {loading ? "–" : value}
+            </div>
+            <div className="flex items-center justify-center gap-1.5 mt-1.5">
+              <span className={`w-2 h-2 rounded-full ${dot}`} />
+              <span className={`text-sm font-medium ${text}`}>{label}</span>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Erfolgs-Banner */}
+      {/* Error Banner */}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="bg-red-50 border border-red-200 rounded-2xl px-4 py-3 text-base text-red-800 flex items-center gap-2"
+          >
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            <span>{error}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Success Banner */}
       <AnimatePresence>
         {successTable !== null && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="bg-green-950/80 border border-green-800 rounded-[2px] px-4 py-3 text-sm text-[var(--color-success)] flex items-center gap-2"
+            className="bg-green-50 border border-green-200 rounded-2xl px-4 py-3 text-base text-green-800 flex items-center gap-2"
           >
-            <CheckCircle className="w-4 h-4 flex-shrink-0" />
-            <span>Tisch {successTable} wurde erfolgreich {tables.find(t=>t.id===successTable)?.status === "reserved" ? "reserviert" : "gebucht"}!</span>
+            <CheckCircle className="w-5 h-5 flex-shrink-0" />
+            <span>Tisch {successTable} wurde erfolgreich gebucht. Viel Spaß!</span>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Tisch-Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        {tables.map((table, i) => (
-          <motion.div
-            key={table.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.06, duration: 0.3 }}
-          >
-            <TableCard table={table} onClick={() => handleTableClick(table)} />
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Legende */}
-      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[2px] p-4">
-        <div className="flex items-center gap-1.5 text-xs text-[var(--color-muted)] mb-3">
-          <Info className="w-3.5 h-3.5" />
-          <span className="uppercase tracking-wider font-medium">Preise</span>
+      {/* Table Grid */}
+      {loading ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div
+              key={i}
+              className="border border-[var(--color-border)] rounded-2xl p-5 bg-white animate-pulse h-32"
+            />
+          ))}
         </div>
-        <div className="grid grid-cols-2 gap-2 text-xs text-[var(--color-muted)]">
-          <div className="flex items-center justify-between">
-            <span>Mo–Do</span>
-            <span className="font-mono text-[var(--color-text)]">7 €/Std.</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span>Fr–So</span>
-            <span className="font-mono text-[var(--color-text)]">9 €/Std.</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span>Schüler</span>
-            <span className="font-mono text-[var(--color-text)]">5 €/Std.</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span>Queue-Leih</span>
-            <span className="font-mono text-[var(--color-text)]">kostenlos</span>
-          </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {enrichedTables.map((table, i) => (
+            <motion.div
+              key={table.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.06, duration: 0.3 }}
+            >
+              <TableCard
+                table={table}
+                onClick={() => setSelectedTable(table)}
+              />
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {/* Preise */}
+      <div className="bg-white border border-[var(--color-border)] rounded-2xl card-shadow p-5">
+        <div className="flex items-center gap-2 text-sm font-bold text-[var(--color-text)] mb-4">
+          <Info className="w-4 h-4 text-[var(--color-accent)]" />
+          <span>Preise</span>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { label: "Montag – Donnerstag", price: "7,00 € / Stunde" },
+            { label: "Freitag – Sonntag",   price: "9,00 € / Stunde" },
+            { label: "Schüler & Studenten", price: "5,00 € / Stunde" },
+            { label: "Queue-Verleih",       price: "kostenlos"       },
+          ].map(({ label, price }) => (
+            <div key={label} className="bg-[var(--color-surface-2)] rounded-xl px-4 py-3">
+              <div className="text-sm text-[var(--color-muted)]">{label}</div>
+              <div className="text-base font-bold text-[var(--color-text)] mt-0.5">{price}</div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -363,8 +487,9 @@ export default function BilliardPage() {
         {selectedTable && (
           <BookingModal
             table={selectedTable}
-            onClose={() => setSelectedTable(null)}
+            onClose={() => !submitting && setSelectedTable(null)}
             onBook={handleBook}
+            submitting={submitting}
           />
         )}
       </AnimatePresence>

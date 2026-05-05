@@ -5,9 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { NewsCard, type NewsPost } from "./NewsCard";
 
 const FILTERS = [
-  { key: "all", label: "Alle" },
-  { key: "event", label: "Events" },
-  { key: "sport", label: "Sport" },
+  { key: "all",     label: "Alle"     },
+  { key: "event",   label: "Events"   },
+  { key: "sport",   label: "Sport"    },
   { key: "special", label: "Specials" },
 ] as const;
 
@@ -18,23 +18,24 @@ interface NewsFeedProps {
 export function NewsFeed({ posts }: NewsFeedProps) {
   const [filter, setFilter] = useState<"all" | NewsPost["type"]>("all");
 
-  const pinned = posts.filter((p) => p.pinned);
+  const pinned  = posts.filter((p) => p.pinned);
   const regular = posts.filter(
     (p) => !p.pinned && (filter === "all" || p.type === filter)
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+    <div className="space-y-5">
+      {/* Filter tabs */}
+      <div className="flex gap-2 overflow-x-auto pb-1">
         {FILTERS.map(({ key, label }) => (
           <button
             key={key}
             onClick={() => setFilter(key)}
             className={[
-              "px-3 py-1.5 text-xs rounded-[2px] border whitespace-nowrap transition-colors",
+              "px-4 py-2 text-sm font-medium rounded-lg border whitespace-nowrap transition-all min-h-[40px]",
               filter === key
-                ? "border-[var(--color-accent)] text-[var(--color-accent)] bg-amber-950"
-                : "border-[var(--color-border)] text-[var(--color-muted)] hover:text-[var(--color-text)]",
+                ? "border-[var(--color-accent)] text-[var(--color-accent)] bg-amber-50"
+                : "border-[var(--color-border)] bg-white text-[var(--color-muted)] hover:text-[var(--color-text)] hover:border-[var(--color-muted)]",
             ].join(" ")}
           >
             {label}

@@ -5,25 +5,25 @@ interface BadgeProps {
 }
 
 const variants = {
-  default: "bg-[var(--color-surface-2)] text-[var(--color-muted)] border-[var(--color-border)]",
-  success: "bg-green-950 text-[var(--color-success)] border-green-800",
-  warning: "bg-amber-950 text-[var(--color-warning)] border-amber-800",
-  danger: "bg-red-950 text-[var(--color-danger)] border-red-900",
-  gold: "bg-amber-950 text-amber-400 border-amber-700",
-  silver: "bg-slate-800 text-slate-300 border-slate-600",
-  bronze: "bg-orange-950 text-orange-400 border-orange-800",
+  default:  "bg-[var(--color-surface-2)] text-[var(--color-muted)] border-[var(--color-border)]",
+  success:  "bg-green-50 text-green-800 border-green-200",
+  warning:  "bg-amber-50 text-amber-800 border-amber-200",
+  danger:   "bg-red-50 text-red-800 border-red-200",
+  gold:     "bg-amber-50 text-amber-700 border-amber-300",
+  silver:   "bg-slate-100 text-slate-600 border-slate-300",
+  bronze:   "bg-orange-50 text-orange-700 border-orange-200",
 };
 
 const sizes = {
-  sm: "text-[10px] px-1.5 py-0.5",
-  md: "text-xs px-2 py-1",
+  sm: "text-xs px-2 py-0.5",
+  md: "text-sm px-2.5 py-1",
 };
 
 export function Badge({ children, variant = "default", size = "md" }: BadgeProps) {
   return (
     <span
       className={[
-        "inline-flex items-center border rounded-[2px] font-medium",
+        "inline-flex items-center border rounded-md font-medium",
         variants[variant],
         sizes[size],
       ].join(" ")}

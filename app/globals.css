@@ -1,17 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  --color-bg: #0a0a0a;
-  --color-surface: #141414;
-  --color-surface-2: #1e1e1e;
-  --color-border: #2a2a2a;
-  --color-accent: #e8a020;
-  --color-accent-2: #c0392b;
-  --color-text: #f0f0f0;
-  --color-muted: #666666;
-  --color-success: #27ae60;
-  --color-warning: #e8a020;
-  --color-danger: #c0392b;
+  /* Warm, light maritime palette */
+  --color-bg: #F5F1EB;
+  --color-surface: #FFFFFF;
+  --color-surface-2: #EDE9E2;
+  --color-border: #D8D2C8;
+  --color-accent: #9E5F28;        /* cognac amber – maritime warmth */
+  --color-accent-hover: #7D4A1E;
+  --color-accent-2: #B83A10;
+  --color-text: #1A1410;          /* warm near-black */
+  --color-muted: #6E655E;
+  --color-success: #2A6E3F;
+  --color-warning: #9E5F28;
+  --color-danger: #B83A10;
+  --color-nav-bg: #FFFFFF;
 }
 
 @theme inline {
@@ -28,7 +31,6 @@
   --color-danger: var(--color-danger);
   --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-syne);
 }
 
 * {
@@ -37,6 +39,7 @@
 
 html {
   height: 100%;
+  font-size: 17px;
 }
 
 body {
@@ -44,31 +47,45 @@ body {
   color: var(--color-text);
   font-family: var(--font-sans), Inter, system-ui, sans-serif;
   min-height: 100%;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: var(--color-bg); }
-::-webkit-scrollbar-thumb { background: var(--color-border); }
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--color-surface-2); }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
 
+/* Focus ring – accessible, warm */
 :focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
+  outline: 3px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
-@keyframes gold-pulse {
-  0%, 100% { box-shadow: 0 0 8px 2px rgba(232, 160, 32, 0.4); }
-  50% { box-shadow: 0 0 16px 4px rgba(232, 160, 32, 0.7); }
+/* Amber glow for active billiard timer */
+@keyframes warm-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(158, 95, 40, 0.35); }
+  50%       { box-shadow: 0 0 0 6px rgba(158, 95, 40, 0); }
 }
 
 .gold-glow {
-  animation: gold-pulse 2s ease-in-out infinite;
+  animation: warm-pulse 2s ease-in-out infinite;
 }
 
 @keyframes tick {
-  0% { transform: scale(1.05); }
+  0%   { transform: scale(1.05); }
   100% { transform: scale(1); }
 }
 
 .tick-anim {
   animation: tick 0.1s ease-out;
+}
+
+/* Card shadow utility */
+.card-shadow {
+  box-shadow: 0 1px 4px rgba(26, 20, 16, 0.08), 0 4px 16px rgba(26, 20, 16, 0.06);
+}
+.card-shadow-md {
+  box-shadow: 0 2px 8px rgba(26, 20, 16, 0.10), 0 8px 24px rgba(26, 20, 16, 0.08);
 }

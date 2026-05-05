@@ -93,7 +93,7 @@ const DEMO_MENU: MenuCategory[] = [
       {
         id: "m4",
         name: 'Burger "Zur Werft"',
-        description: "180g Beef Patty, Cheddar, karamellisierte Zwiebeln, Werft-Soße, Brioche-Bun, Coleslaw",
+        description: "180 g Beef Patty, Cheddar, karamellisierte Zwiebeln, Werft-Soße, Brioche-Bun, Coleslaw",
         price: 14.90,
         allergens: ["Gluten", "Laktose", "Eier", "Sesam"],
         available: true,
@@ -101,7 +101,7 @@ const DEMO_MENU: MenuCategory[] = [
       {
         id: "m5",
         name: "Tagessuppe",
-        description: "Fragen Sie das Personal nach der Tagessuppe",
+        description: "Fragen Sie unser Personal nach der Tagessuppe",
         price: 5.50,
         allergens: [],
         available: true,
@@ -116,7 +116,7 @@ const DEMO_MENU: MenuCategory[] = [
       {
         id: "s1",
         name: "Pommes frites",
-        description: "Knusprige Pommes, Ketchup oder Mayo",
+        description: "Knusprige Pommes, Ketchup oder Mayonnaise",
         price: 4.50,
         allergens: ["Gluten"],
         available: true,
@@ -178,7 +178,7 @@ const DEMO_MENU: MenuCategory[] = [
       },
       {
         id: "d4",
-        name: "Wasser still / sprudelnd",
+        name: "Wasser still oder sprudelnd",
         description: "0,5 l Flasche",
         price: 2.50,
         allergens: [],
@@ -288,8 +288,8 @@ const DEMO_MENU: MenuCategory[] = [
       },
       {
         id: "c6",
-        name: "Virgin Mojito",
-        description: "Alkoholfrei – Limette, Minze, Rohrzucker, Soda",
+        name: "Virgin Mojito (Alkoholfrei)",
+        description: "Limette, Minze, Rohrzucker, Soda",
         price: 6.50,
         allergens: [],
         available: true,
@@ -327,47 +327,55 @@ export default async function MenuPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
+      {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-[var(--color-text)] mb-1">Speisekarte</h1>
-        <p className="text-[var(--color-muted)] text-sm">Bistro Zur Werft · Erlenbach am Main</p>
+        <h1 className="text-3xl font-bold text-[var(--color-text)] mb-1">Speisekarte</h1>
+        <p className="text-[var(--color-muted)] text-base">Bistro Zur Werft · Erlenbach am Main</p>
       </div>
 
       {/* Kategorien-Sprung-Navigation */}
-      <div className="flex gap-2 overflow-x-auto pb-2 mb-8">
+      <div className="flex gap-2 overflow-x-auto pb-3 mb-10 -mx-4 px-4">
         {menu.map((cat) => (
           <a
             key={cat.id}
             href={`#${cat.id}`}
-            className="flex-shrink-0 text-xs px-3 py-1.5 rounded-[2px] border border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors whitespace-nowrap"
+            className="flex-shrink-0 text-sm font-medium px-4 py-2.5 rounded-xl border border-[var(--color-border)] bg-white text-[var(--color-muted)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors whitespace-nowrap card-shadow"
           >
             {cat.emoji} {cat.name}
           </a>
         ))}
       </div>
 
-      <div className="space-y-12">
+      <div className="space-y-14">
         {menu.map((cat) => (
           <section key={cat.id} id={cat.id}>
-            <div className="flex items-center gap-2 mb-4 pb-2 border-b border-[var(--color-border)]">
-              {cat.emoji && <span className="text-base">{cat.emoji}</span>}
-              <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--color-accent)]">
+            {/* Category heading */}
+            <div className="flex items-center gap-3 mb-5 pb-3 border-b-2 border-[var(--color-accent)]">
+              {cat.emoji && <span className="text-2xl">{cat.emoji}</span>}
+              <h2 className="text-xl font-bold text-[var(--color-text)]">
                 {cat.name}
               </h2>
             </div>
 
-            <div className="space-y-0">
+            <div className="bg-white rounded-2xl border border-[var(--color-border)] card-shadow overflow-hidden">
               {cat.items.map((item, i) => (
                 <div
                   key={item.id}
                   className={[
-                    "flex items-start justify-between gap-4 py-3.5",
+                    "flex items-start justify-between gap-4 px-5 py-4",
                     i < cat.items.length - 1 ? "border-b border-[var(--color-border)]" : "",
-                    !item.available ? "opacity-40" : "",
+                    !item.available ? "opacity-50" : "",
                   ].join(" ")}
                 >
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`text-sm font-medium ${item.available ? "text-[var(--color-text)]" : "text-[var(--color-muted)] line-through"}`}>
+                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                      <span
+                        className={`text-base font-semibold ${
+                          item.available
+                            ? "text-[var(--color-text)]"
+                            : "text-[var(--color-muted)] line-through"
+                        }`}
+                      >
                         {item.name}
                       </span>
                       {!item.available && (
@@ -375,16 +383,16 @@ export default async function MenuPage() {
                       )}
                     </div>
                     {item.description && (
-                      <p className="text-xs text-[var(--color-muted)] mt-0.5 leading-relaxed">
+                      <p className="text-sm text-[var(--color-muted)] leading-relaxed">
                         {item.description}
                       </p>
                     )}
                     {item.allergens.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-1.5">
+                      <div className="flex flex-wrap gap-1 mt-2">
                         {item.allergens.map((a) => (
                           <span
                             key={a}
-                            className="text-[10px] px-1.5 py-0.5 border border-[var(--color-border)] rounded-[2px] text-[var(--color-muted)]"
+                            className="text-xs px-2 py-0.5 border border-[var(--color-border)] rounded-md text-[var(--color-muted)] bg-[var(--color-surface-2)]"
                           >
                             {a}
                           </span>
@@ -392,7 +400,7 @@ export default async function MenuPage() {
                       </div>
                     )}
                   </div>
-                  <span className="font-mono text-sm text-[var(--color-accent)] whitespace-nowrap mt-0.5 font-medium">
+                  <span className="font-bold text-base text-[var(--color-accent)] whitespace-nowrap mt-0.5 tabular-nums">
                     {formatPrice(item.price)}
                   </span>
                 </div>
@@ -402,9 +410,10 @@ export default async function MenuPage() {
         ))}
       </div>
 
-      <div className="mt-12 pt-6 border-t border-[var(--color-border)]">
-        <p className="text-xs text-[var(--color-muted)] text-center">
-          Alle Preise inkl. MwSt. · Änderungen vorbehalten · Bei Allergien bitte das Personal fragen.
+      <div className="mt-14 pt-6 border-t border-[var(--color-border)]">
+        <p className="text-sm text-[var(--color-muted)] text-center leading-relaxed">
+          Alle Preise inkl. MwSt. · Änderungen vorbehalten<br />
+          Bei Allergien sprechen Sie bitte unser Personal an.
         </p>
       </div>
     </div>

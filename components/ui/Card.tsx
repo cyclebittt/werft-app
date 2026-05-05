@@ -10,8 +10,10 @@ export function Card({ children, className = "", hover, onClick }: CardProps) {
     <div
       onClick={onClick}
       className={[
-        "bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[2px]",
-        hover ? "transition-colors duration-150 hover:border-[var(--color-accent)] cursor-pointer" : "",
+        "bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl card-shadow",
+        hover
+          ? "transition-all duration-150 hover:border-[var(--color-accent)] hover:shadow-md cursor-pointer"
+          : "",
         className,
       ].join(" ")}
     >
