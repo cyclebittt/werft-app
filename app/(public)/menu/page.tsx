@@ -25,7 +25,7 @@ const DEMO_MENU: MenuCategory[] = [
   {
     id: "fruehstueck",
     name: "Frühstück",
-    emoji: "🌅",
+    emoji: "",
     items: [
       {
         id: "f1",
@@ -64,7 +64,7 @@ const DEMO_MENU: MenuCategory[] = [
   {
     id: "mittag",
     name: "Mittagstisch",
-    emoji: "🍽️",
+    emoji: "",
     items: [
       {
         id: "m1",
@@ -111,7 +111,7 @@ const DEMO_MENU: MenuCategory[] = [
   {
     id: "snacks",
     name: "Snacks & Beilagen",
-    emoji: "🍟",
+    emoji: "",
     items: [
       {
         id: "s1",
@@ -150,7 +150,7 @@ const DEMO_MENU: MenuCategory[] = [
   {
     id: "softdrinks",
     name: "Softdrinks & Kaffee",
-    emoji: "☕",
+    emoji: "",
     items: [
       {
         id: "d1",
@@ -197,7 +197,7 @@ const DEMO_MENU: MenuCategory[] = [
   {
     id: "bier",
     name: "Bier & Wein",
-    emoji: "🍺",
+    emoji: "",
     items: [
       {
         id: "b1",
@@ -244,7 +244,7 @@ const DEMO_MENU: MenuCategory[] = [
   {
     id: "cocktails",
     name: "Cocktails & Longdrinks",
-    emoji: "🍹",
+    emoji: "",
     items: [
       {
         id: "c1",
@@ -341,7 +341,7 @@ export default async function MenuPage() {
             href={`#${cat.id}`}
             className="flex-shrink-0 text-sm font-medium px-4 py-2.5 rounded-xl border border-[var(--color-border)] bg-white text-[var(--color-muted)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors whitespace-nowrap card-shadow"
           >
-            {cat.emoji} {cat.name}
+            {cat.name}
           </a>
         ))}
       </div>
@@ -351,7 +351,6 @@ export default async function MenuPage() {
           <section key={cat.id} id={cat.id}>
             {/* Category heading */}
             <div className="flex items-center gap-3 mb-5 pb-3 border-b-2 border-[var(--color-accent)]">
-              {cat.emoji && <span className="text-2xl">{cat.emoji}</span>}
               <h2 className="text-xl font-bold text-[var(--color-text)]">
                 {cat.name}
               </h2>
